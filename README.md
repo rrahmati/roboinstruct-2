@@ -48,7 +48,7 @@ There are some ideas implemented that are not included in the paper such as mult
 
 Testing on the robot
 ------------
-For testing the trained model on the robot, first run ``rosrun demonstrate_leap leap_al5d`` so that you can send commands to the robot. setup the camera and run it to publish the images on its corresponding ROS topic. Run ``sample.py`` to load the saved model and generates the trajectory and send commands to the robot.
+For testing the trained model on the robot, first run ``rosrun demonstrate_leap leap_al5d`` so that you can send commands to the robot. Setup the camera and run it to publish the images on its corresponding ROS topic. Run ``sample.py`` to load the saved model and generates the trajectory and send commands to the robot.
 
 
 Acknowledgment
