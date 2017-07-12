@@ -8,7 +8,7 @@ Video
 
 Paper
 ------------
-  * R. Rahmatizadeh, P. Abolghasemi, L. B&ouml;l&ouml;ni, and Sergey Levine.
+  * Rouhollah Rahmatizadeh, Pooya Abolghasemi, Ladislau Bölöni, Sergey Levine.
 	Vision-Based Multi-Task Manipulation for Inexpensive Robots Using End-To-End Learning from Demonstration.
 	[arXiv](https://arxiv.org/abs/1707.02920)
 
