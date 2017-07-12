@@ -1,0 +1,14 @@
+predictions/
+trajectories/
+models/
+
+*.npy
+*.pyc
+*.txt
+*.hdf5
+*.pkl
+*.model
+*.state
+*.jpg
+*.jpeg
+*.png
