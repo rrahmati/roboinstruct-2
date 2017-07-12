@@ -30,8 +30,11 @@ Optional:
 Demonstration
 ------------
 First you need a robot. The system should work for different robots. The code in this repository can control a [Lynxmotin AL5D](http://www.lynxmotion.com/c-130-al5d.aspx) robot arm. Connect this robot to your computer. Connect a camera and set its corresponding image topic in ``record_demonstration.py`` and ``config.py``. Place the camera in a position so that it can see the robot arm and the relevant objects in the environment. Install either PlayStation Move API or LeapMotion driver and connect the device to your computer. Copy ``demonstrate_ros_package`` folder to your ROS workspace and build the ros package (``catkin_make`` etc.). For PS Move, change the path to the PS Move API in ``publish_move_pose.py`` file. Run these commands:
+
 `rosrun demonstrate_leap leap_al5d -l 1` (1 for LeapMotion, 0 for PS Move)
+
 `rosrun demonstrate_leap publish_move_pose.py` (Only for PS Move)
+
 `rosrun demonstrate_leap record_demonstration.py`
 
 If everything goes well, the recorded demonstration will be saved in your home directory. Copy them into a new folder in roboinstruct root folder and call it ``trajectories``. Create another folder in roboinstruct root folder and call it ``models``.
