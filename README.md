@@ -53,4 +53,4 @@ For testing the trained model on the robot, first run ``rosrun demonstrate_leap 
 
 Acknowledgment
 ------------
-The codes in the [char-rnn](https://github.com/johnarevalo/blocks-char-rnn) and [chainer-vae-gan](https://github.com/dsanno/chainer-vae-gan) repositories helped a lot in this project.
+The codes in the [char-rnn](https://github.com/johnarevalo/blocks-char-rnn), [chainer-vae-gan](https://github.com/dsanno/chainer-vae-gan), and [leap-hand](https://github.com/lager1/leap_hand) repositories helped a lot in this project.
