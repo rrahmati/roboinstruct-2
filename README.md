@@ -20,7 +20,7 @@ Dependencies:
   * [Blocks](http://blocks.readthedocs.io/en/latest/setup.html) (cutting-edge development version)
   * [Pandas](http://pandas.pydata.org/) (``pip install pandas``)
   * [OpenCV](http://www.pyimagesearch.com/2015/06/22/install-opencv-3-0-and-python-2-7-on-ubuntu)
-  * [Pollow](https://pypi.python.org/pypi/Pillow/2.2.1)
+  * [Pillow](https://pypi.python.org/pypi/Pillow/2.2.1)
   * [Robot Operating System](http://www.ros.org/install) (We tested on ROS Indigo and Ubuntu 14.04)
 
 Optional:
