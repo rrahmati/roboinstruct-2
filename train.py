@@ -36,16 +36,13 @@ train_flag = [theano.shared(0)]
 x = x.swapaxes(0,1)
 y = y.swapaxes(0,1)
 out_size = len(output_columns) - 1 if cost_mode == 'RL-MDN' else len(output_columns)
-if use_autoencoder:
-    _, latent_size = load_encoder()
-    in_size = latent_size + len(input_columns)
-    # mean = x[:,:,0:latent_size]
-    # var = T.clip(T.exp(x[:,:,latent_size:latent_size*2]), .0001, 1000)
-    # rrng = MRG_RandomStreams(seed)
-    # rand = rrng.normal(var.shape, 0, 1, dtype=theano.config.floatX)
-    # x  = ifelse(T.lt(train_flag[0], .5), T.concatenate([mean , x[:,:,latent_size*2:]], axis=2) , T.concatenate([mean + (var * rand), x[:,:,latent_size*2:]], axis=2))
-else:
-    in_size = len(input_columns)
+_, latent_size = load_encoder()
+in_size = latent_size + len(input_columns)
+# mean = x[:,:,0:latent_size]
+# var = T.clip(T.exp(x[:,:,latent_size:latent_size*2]), .0001, 1000)
+# rrng = MRG_RandomStreams(seed)
+# rand = rrng.normal(var.shape, 0, 1, dtype=theano.config.floatX)
+# x  = ifelse(T.lt(train_flag[0], .5), T.concatenate([mean , x[:,:,latent_size*2:]], axis=2) , T.concatenate([mean + (var * rand), x[:,:,latent_size*2:]], axis=2))
 y_hat, cost, cells = nn_fprop(x, y, in_size, out_size, hidden_size, num_recurrent_layers, train_flag)
 
 # COST

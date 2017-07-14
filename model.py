@@ -119,7 +119,7 @@ def output_layer(x, hiddens, y, in_size, out_size, hidden_size, components_size=
         costs.append(T.mul(cost, prediction_cost_weights[i]))
     cost_sum = T.mean(costs)
     cost_sum.name = 'cost'
-    return linear_outputs[1][0], cost_sum
+    return linear_outputs[0][0], cost_sum
 
 
 def linear_layer(in_size, dim, x, h, n, first_layer=False):

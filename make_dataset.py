@@ -2,10 +2,7 @@ import theano
 import numpy as np
 import sys
 import cv2
-import codecs
 import h5py
-import yaml
-import pickle
 from fuel.datasets import H5PYDataset
 from config import config
 import os
@@ -105,8 +102,6 @@ def train_test_split():
                     test_img_data[-len(new_test_img_data):,:,:,:] = new_test_img_data
                     os.remove(new_train_img_data.filename)
                     os.remove(new_test_img_data.filename)
-    train_data = train_data.shift(1)
-    train_data = train_data[1:]
     train_data_in = pd.DataFrame(train_data[input_columns])
     train_data_out = pd.DataFrame(train_data[output_columns])
     test_data_in = pd.DataFrame(test_data[input_columns])
@@ -169,57 +164,57 @@ def main():
         np.save('data_in.npy', data_in)
         np.save('data_out.npy', data_out)
         print 'Files saved on disc for Chainer.'
-        sys.exit(0)
     elif make_dataset_mode == 'prepare_data_for_blocks':
         img_data = np.load('img_data.npy', mmap_mode='r')
+        data_in, in_size = getConvFeatures(data_in, img_data)
+        out_size = len(output_columns)
+        max_prediction = max(future_predictions) + 1
+        if len(data_in) % seq_length > 0:
+            data_in = data_in[:len(data_in) - len(data_in) % seq_length + max_prediction]
+        else:
+            data_in = data_in[:len(data_in) - seq_length + max_prediction]
+        nsamples = (len(data_in) / seq_redundancy)
+        print 'Saving data to disc...'
+        inputs = np.memmap('inputs.npy', dtype=theano.config.floatX, mode='w+', shape=(nsamples, seq_length, in_size))
+        outputs = np.memmap('outputs.npy', dtype=theano.config.floatX, mode='w+',
+                            shape=(nsamples, seq_length, len(future_predictions) * out_size))
+        for i, p in enumerate(xrange(0, len(data_in) - max_prediction - seq_length, seq_redundancy)):
+            inputs[i] = np.array([d for d in data_in[p:p + seq_length]])
+            for j in xrange(len(future_predictions)):
+                outputs[i, :, j * out_size:(j + 1) * out_size] = np.array(
+                    [d for d in data_out[p + future_predictions[j]:p + seq_length + future_predictions[j]]])
 
-    data_in, in_size = getConvFeatures(data_in, img_data)
-    out_size = len(output_columns)
-    max_prediction = max(future_predictions) + 1
-    if len(data_in) % seq_length > 0:
-        data_in = data_in[:len(data_in) - len(data_in) % seq_length + max_prediction]
-    else:
-        data_in = data_in[:len(data_in) - seq_length + max_prediction]
-    nsamples = (len(data_in) / seq_redundancy)
-    print 'Saving data to disc...'
-    inputs = np.memmap('inputs.npy', dtype=theano.config.floatX, mode='w+', shape=(nsamples, seq_length, in_size))
-    outputs = np.memmap('outputs.npy', dtype=theano.config.floatX, mode='w+',
-                        shape=(nsamples, seq_length, len(future_predictions) * out_size))
-    for i, p in enumerate(xrange(0, len(data_in) - max_prediction - seq_length, seq_redundancy)):
-        inputs[i] = np.array([d for d in data_in[p:p + seq_length]])
-        for j in xrange(len(future_predictions)):
-            outputs[i, :, j * out_size:(j + 1) * out_size] = np.array(
-                [d for d in data_out[p + future_predictions[j]:p + seq_length + future_predictions[j]]])
+        nsamples = len(inputs)
+        nsamples_train = train_data_size // seq_length
 
-    nsamples = len(inputs)
-    nsamples_train = train_data_size // seq_length
+        print np.isnan(np.sum(inputs))
+        print np.isnan(np.sum(outputs))
 
-    print np.isnan(np.sum(inputs))
-    print np.isnan(np.sum(outputs))
+        f = h5py.File(hdf5_file, mode='w')
+        features = f.create_dataset('features', inputs.shape, dtype=theano.config.floatX)
+        targets = f.create_dataset('targets', outputs.shape, dtype=theano.config.floatX)
 
-    f = h5py.File(hdf5_file, mode='w')
-    features = f.create_dataset('features', inputs.shape, dtype=theano.config.floatX)
-    targets = f.create_dataset('targets', outputs.shape, dtype=theano.config.floatX)
-
-    features[...] = inputs
-    targets[...] = outputs
-    features.dims[0].label = 'batch'
-    features.dims[1].label = 'sequence'
-    features.dims[2].label = 'features'
-    targets.dims[0].label = 'batch'
-    targets.dims[1].label = 'sequence'
-    targets.dims[2].label = 'outputs'
-    split_dict = {
-        'train': {'features': (0, nsamples_train), 'targets': (0, nsamples_train)},
-        'test': {'features': (nsamples_train, nsamples), 'targets': (nsamples_train, nsamples)}}
-    f.attrs['split'] = H5PYDataset.create_split_array(split_dict)
-    f.flush()
-    f.close()
-    print 'inputs shape:', inputs.shape
-    print 'outputs shape:', outputs.shape
-    os.remove(inputs.filename)
-    os.remove(outputs.filename)
-    print 'Done!'
+        features[...] = inputs
+        targets[...] = outputs
+        features.dims[0].label = 'batch'
+        features.dims[1].label = 'sequence'
+        features.dims[2].label = 'features'
+        targets.dims[0].label = 'batch'
+        targets.dims[1].label = 'sequence'
+        targets.dims[2].label = 'outputs'
+        split_dict = {
+            'train': {'features': (0, nsamples_train), 'targets': (0, nsamples_train)},
+            'test': {'features': (nsamples_train, nsamples), 'targets': (nsamples_train, nsamples)}}
+        f.attrs['split'] = H5PYDataset.create_split_array(split_dict)
+        f.flush()
+        f.close()
+        print 'inputs shape:', inputs.shape
+        print 'outputs shape:', outputs.shape
+        print 'image inputs shape:', img_data.shape
+        os.remove(img_data.filename)
+        os.remove(inputs.filename)
+        os.remove(outputs.filename)
+        print 'Files saved on disc for Blocks!'
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
 config = {}
 
 # parameters of controlling the robot
-config['make_dataset_mode'] = 'prepare_data_for_chainer' # prepare_data_for_chainer or prepare_data_for_blocks
+config['make_dataset_mode'] = 'prepare_data_for_blocks' # prepare_data_for_chainer or prepare_data_for_blocks
 config['robot'] = 'al5d' # al5d, mico
 config['task_to_perform'] = 3005
 config['camera1_image_topic'] = '/kinect2/qhd/image_color_rect'
@@ -29,7 +29,6 @@ config['layer_models'] = ['lstm','lstm','lstm'] # feedforward, lstm, rnn
 config['num_recurrent_layers'] = len(config['layer_models'])
 
 # parameters of vision
-config['current_scene_image_path'] = 'predictions/currentSceneImage.jpg'
 config['pixel_depth'] = 255
 config['image_shape'] = (128, 128) # height, width
 config['num_channels'] = 3
@@ -49,8 +48,8 @@ config['seed'] = 66478
 config['single_dim_out'] = True
 
 # parameters about auxiliary predictions - The idea is to have some layers to predict another related prediction, for instance, predict the pose of object or the pose of gripper in next 4 timesteps
-config['future_predictions'] = [0,1]
-config['prediction_cost_weights'] = [0,1,0,0,1,1,1]
+config['future_predictions'] = [1]
+config['prediction_cost_weights'] = [1]
 
 # parameters of multi-task learning : The idea is to train a network on data of multiple tasks. The ID if the task to be executed is given as an input in each time-step
 config['multi_task_mode'] = 'ID'  # ID, goal

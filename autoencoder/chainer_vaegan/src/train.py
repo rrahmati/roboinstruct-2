@@ -24,8 +24,6 @@ parser.add_argument('--iter', default=1000, type=int,
                     help='number of iteration')
 parser.add_argument('--out_image_dir', default='../image', type=str,
                     help='output directory to output images')
-parser.add_argument('--dataset', '-d', default='../../../imgs_np_unity_400.npy', type=str,
-                    help='dataset file path')
 parser.add_argument('--size', '-s', default=128, type=int, choices=[48, 64, 80, 96, 112, 128],
                     help='image size')
 args = parser.parse_args()
@@ -65,7 +63,7 @@ for i in range(num_gpus-1):
 
 enc_dis_model = net.Encoder(density=8, size=image_size, latent_size=latent_size)
 gen_dis_model = net.Generator(density=8, size=image_size, latent_size=latent_size)
-rnn_model = rnn_net.MDN_RNN(IN_DIM=latent_size+5, HIDDEN_DIM=300, OUT_DIM=24, NUM_MIXTURE=40)
+rnn_model = rnn_net.MDN_RNN(IN_DIM=latent_size+5, HIDDEN_DIM=300, OUT_DIM=6, NUM_MIXTURE=40)
 
 optimizer_enc = optimizers.Adam(alpha=0.0001, beta1=0.5)
 optimizer_enc.setup(enc_model[0])
@@ -181,7 +179,7 @@ if __name__ == '__main__':
             data_in = np.load('../../../data_in_ae.npy')
         else:
             data_in = np.load('../../../data_in.npy')
-        data_out = np.load('../../../data_out.npy')
+        data_out = np.load('../../../data_out.npy')[:,:-1]
         print len(img_data), len(data_in), len(data_out)
         n_images = len(img_data)
     else:
@@ -406,11 +404,7 @@ def train(enc, gen, dis, optimizer_enc, optimizer_gen, optimizer_dis, epoch_num,
         np.random.shuffle( train_indices )
         for i in xrange(0, x_size - max_seq_length * BATCH_SIZE , BATCH_SIZE):
             batch_start_time = time.time()
-            try:
-                loss_enc, loss_gen, loss_dis, loss_rec, loss_rnn = train_one(enc, gen, dis, rnn_model, optimizer_enc, optimizer_gen, optimizer_dis, i)
-            except:
-                print 'error occurred in iteration ', i
-                continue
+            loss_enc, loss_gen, loss_dis, loss_rec, loss_rnn = train_one(enc, gen, dis, rnn_model, optimizer_enc, optimizer_gen, optimizer_dis, i)
             sum_loss_enc += loss_enc * BATCH_SIZE
             sum_loss_gen += loss_gen * BATCH_SIZE
             sum_loss_dis += loss_dis * BATCH_SIZE
@@ -440,11 +434,11 @@ def train(enc, gen, dis, optimizer_enc, optimizer_gen, optimizer_dis, epoch_num,
                 serializers.save_hdf5('{0}enc.state'.format(args.output), optimizer_enc)
                 serializers.save_hdf5('{0}gen.model'.format(args.output), gen[0])
                 serializers.save_hdf5('{0}gen.state'.format(args.output), optimizer_gen)
-
-                serializers.save_hdf5('{0}enc_dis.model'.format(args.output), enc_dis_model)
-                serializers.save_hdf5('{0}enc_dis.state'.format(args.output), optimizer_enc_dis)
-                serializers.save_hdf5('{0}gen_dis.model'.format(args.output), gen_dis_model)
-                serializers.save_hdf5('{0}gen_dis.state'.format(args.output), optimizer_gen_dis)
+                if cost_mode == 'BEGAN':
+                    serializers.save_hdf5('{0}enc_dis.model'.format(args.output), enc_dis_model)
+                    serializers.save_hdf5('{0}enc_dis.state'.format(args.output), optimizer_enc_dis)
+                    serializers.save_hdf5('{0}gen_dis.model'.format(args.output), gen_dis_model)
+                    serializers.save_hdf5('{0}gen_dis.state'.format(args.output), optimizer_gen_dis)
 
                 serializers.save_hdf5('{0}dis.model'.format(args.output), dis[0])
                 serializers.save_hdf5('{0}dis.state'.format(args.output), optimizer_dis)
