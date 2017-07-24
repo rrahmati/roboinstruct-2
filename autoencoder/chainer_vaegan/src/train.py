@@ -217,16 +217,18 @@ def load_next_batch(i):
     loading_next_batch = False
 
 def encode(img_batch):
-    cuda.get_device(main_gpu).use()
-    x_in = xp.asarray(img_batch)
-    z, mean, var, _ = enc_model[0](Variable(x_in, volatile=True), train=False)
-    return (cuda.to_cpu(z.data), cuda.to_cpu(mean.data), cuda.to_cpu(var.data))
+    with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
+        cuda.get_device(main_gpu).use()
+        x_in = xp.asarray(img_batch)
+        z, mean, var, _ = enc_model[0](Variable(x_in), train=False)
+        return (cuda.to_cpu(z.data), cuda.to_cpu(mean.data), cuda.to_cpu(var.data))
 
 def decode(z):
-    cuda.get_device(main_gpu).use()
-    z_in = xp.asarray(z)
-    x = gen_model[0](Variable(z_in, volatile=True), train=False)
-    return ((cuda.to_cpu(x.data) + 1) * 128).clip(0, 255).astype(np.uint8)
+    with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
+        cuda.get_device(main_gpu).use()
+        z_in = xp.asarray(z)
+        x = gen_model[0](Variable(z_in), train=False)
+        return ((cuda.to_cpu(x.data) + 1) * 128).clip(0, 255).astype(np.uint8)
 
 def compute_mse_loss(enc, gen, x, xp):
     x = x
@@ -410,25 +412,26 @@ def train(enc, gen, dis, optimizer_enc, optimizer_gen, optimizer_dis, epoch_num,
             sum_loss_dis += loss_dis * BATCH_SIZE
             sum_loss_rnn += loss_rnn * BATCH_SIZE
             if i % image_save_interval == 0:
-                print ''
-                print '{} {} {} {}'.format(sum_loss_enc / (image_save_interval), sum_loss_gen / (image_save_interval), sum_loss_dis / (image_save_interval), sum_loss_rnn / (image_save_interval))
-                if out_image_dir != None:
-                    cuda.get_device(main_gpu).use()
-                    z, m, v, _ = enc[0](Variable(cuda.to_gpu(test_batch,main_gpu), volatile=True), train=False)
-                    z = m
-                    data = gen[0](z, train=False).data
-                    test_rec_loss = F.squared_difference(data, xp.asarray(test_batch))
-                    test_rec_loss = float(F.sum(test_rec_loss).data) / (normer)
-                    image = ((cuda.to_cpu(data) + 1) * 128).clip(0, 255).astype(np.uint8)
-                    image = image[:out_image_row_num*out_image_col_num]
-                    image = image.reshape((out_image_row_num, out_image_col_num, 3, image_size, image_size)).transpose((0, 3, 1, 4, 2)).reshape((out_image_row_num * image_size, out_image_col_num * image_size, 3))
-                    Image.fromarray(image).save('{0}/{1:03d}_{2:07d}.png'.format(out_image_dir, epoch, i))
-                    if i == 0:
-                        org_image = ((test_batch + 1) * 128).clip(0, 255).astype(np.uint8)
-                        org_image = org_image[:out_image_row_num*out_image_col_num]
-                        org_image = org_image.reshape((out_image_row_num, out_image_col_num, 3, image_size, image_size)).transpose((0, 3, 1, 4, 2)).reshape((out_image_row_num * image_size, out_image_col_num * image_size, 3))
-                        Image.fromarray(org_image).save('{0}/org.png'.format(out_image_dir, epoch, i))
-                    sum_loss_enc = sum_loss_gen = sum_loss_dis = sum_loss_rnn = 0
+                with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
+                    print ''
+                    print '{} {} {} {}'.format(sum_loss_enc / (image_save_interval), sum_loss_gen / (image_save_interval), sum_loss_dis / (image_save_interval), sum_loss_rnn / (image_save_interval))
+                    if out_image_dir != None:
+                        cuda.get_device(main_gpu).use()
+                        z, m, v, _ = enc[0](Variable(cuda.to_gpu(test_batch,main_gpu)), train=False)
+                        z = m
+                        data = gen[0](z, train=False).data
+                        test_rec_loss = F.squared_difference(data, xp.asarray(test_batch))
+                        test_rec_loss = float(F.sum(test_rec_loss).data) / (normer)
+                        image = ((cuda.to_cpu(data) + 1) * 128).clip(0, 255).astype(np.uint8)
+                        image = image[:out_image_row_num*out_image_col_num]
+                        image = image.reshape((out_image_row_num, out_image_col_num, 3, image_size, image_size)).transpose((0, 3, 1, 4, 2)).reshape((out_image_row_num * image_size, out_image_col_num * image_size, 3))
+                        Image.fromarray(image).save('{0}/{1:03d}_{2:07d}.png'.format(out_image_dir, epoch, i))
+                        if i == 0:
+                            org_image = ((test_batch + 1) * 128).clip(0, 255).astype(np.uint8)
+                            org_image = org_image[:out_image_row_num*out_image_col_num]
+                            org_image = org_image.reshape((out_image_row_num, out_image_col_num, 3, image_size, image_size)).transpose((0, 3, 1, 4, 2)).reshape((out_image_row_num * image_size, out_image_col_num * image_size, 3))
+                            Image.fromarray(org_image).save('{0}/org.png'.format(out_image_dir, epoch, i))
+                        sum_loss_enc = sum_loss_gen = sum_loss_dis = sum_loss_rnn = 0
             if i % model_save_interval == 0:
                 serializers.save_hdf5('{0}enc.model'.format(args.output), enc[0])
                 serializers.save_hdf5('{0}enc.state'.format(args.output), optimizer_enc)
