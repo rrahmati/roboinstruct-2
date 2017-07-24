@@ -220,7 +220,7 @@ def encode(img_batch):
     with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
         cuda.get_device(main_gpu).use()
         x_in = xp.asarray(img_batch)
-        z, mean, var, _ = enc_model[0](Variable(x_in), train=False)
+        z, mean, var = enc_model[0](Variable(x_in), train=False)
         return (cuda.to_cpu(z.data), cuda.to_cpu(mean.data), cuda.to_cpu(var.data))
 
 def decode(z):
