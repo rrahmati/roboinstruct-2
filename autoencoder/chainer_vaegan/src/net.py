@@ -41,7 +41,7 @@ class Encoder(chainer.Chain):
             rand = xp.random.normal(0, 1, var.data.shape).astype(np.float32)
             z = mean + F.clip(F.exp(var), .001, 100.) * Variable(rand)
             # z  = mean + F.exp(var) * Variable(rand, volatile=not train)
-            return z, mean, var
+            return z, mean, var, h4
 
 
 class Generator(chainer.Chain):
